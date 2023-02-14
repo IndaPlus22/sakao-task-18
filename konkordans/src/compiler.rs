@@ -1,9 +1,14 @@
+
+
 use encoding_rs::WINDOWS_1252;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use std::fs::{File, OpenOptions};
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::thread::current;
 use std::{fmt, path::Path};
+
+use crate::hash::hash_three;
+
 
 const KORPUS_FILE: &str = "files/korpus";
 const TOKEN_FILE: &str = "files/token.txt";
@@ -15,7 +20,7 @@ pub fn read_token() {
         println!("already there");
     }
 
-    construct_magic_file();
+    construct_hashed_file();
 }
 
 fn construct_index_file() {
@@ -37,8 +42,9 @@ fn construct_index_file() {
         let key = line.split_whitespace().next().unwrap();
         let byte_offset = line.split_whitespace().last().unwrap();
 
+        // if it is a new key do a newline and put in what key it is.
         if last_key != key {
-            index += "\n";
+            index += "\n"; // There is one problem with this and it is that the file will start with a new line but it is countered at ln:69
             index += key;
         }
         index += " ";
@@ -47,21 +53,6 @@ fn construct_index_file() {
         last_key = key.to_string();
         line.clear();
         bytes = buf.read_line(&mut line).unwrap();
-        // let key = line.split_whitespace().next().unwrap();
-        // let hash = hash_three(key);
-
-        // if tokens.len() <= hash as usize {
-        //     tokens.resize(hash + 1, Vec::new());
-        // }
-        // if last_key != key {
-        //     tokens[hash as usize].push((key.to_string(), current_byte as u64));
-        // }
-
-        // last_key = key.to_string();
-        // current_byte += bytes;
-
-        // line.clear();
-        // bytes = buf.read_line(&mut line).unwrap();
     }
 
     let mut file = File::create("files/index").expect("coudnt make index file");
@@ -70,7 +61,7 @@ fn construct_index_file() {
     println!("yey");
 }
 
-fn construct_magic_file() -> Vec<Vec<(String, u64)>> {
+fn construct_hashed_file() -> Vec<Vec<(String, u64)>> {
     let mut tokens: Vec<Vec<(String, u64)>> = Vec::with_capacity(1000);
     let mut buf = BufReader::new(File::open("files/index").unwrap());
 
@@ -79,6 +70,7 @@ fn construct_magic_file() -> Vec<Vec<(String, u64)>> {
     let mut last_key: String = String::new();
     let mut current_byte: usize = 0;
 
+    // reading again because the first line empty becuase my code does it.
     bytes = buf.read_line(&mut line).unwrap();
     while bytes > 0 {
         let key = line.split_whitespace().next().unwrap();
@@ -98,21 +90,26 @@ fn construct_magic_file() -> Vec<Vec<(String, u64)>> {
         bytes = buf.read_line(&mut line).unwrap();
     }
 
+    let mut tmp = String::new();
+    for i in 0..tokens.len() {
+        if !tokens[i].is_empty() {
+            for j in 0..tokens[i].len() {
+                tmp += &tokens[i][j].0;
+                tmp += " ";
+                tmp += &tokens[i][j].1.to_string();
+
+                tmp += " ";
+            }
+            tmp += "\n";
+        } else {
+            tmp += "\n";
+        }
+    }
+
+    let mut file = File::create("files/hashed").expect("coudnt make hashed file");
+    file.write_all(tmp.as_bytes());
+    
     tokens
 }
 
-fn hash_three(word: &str) -> usize {
-    let chars = word.chars();
 
-    let mut hash: usize = 0;
-    let mut n = 0;
-    for c in chars {
-        if n == 3 {
-            break;
-        }
-        hash = hash.wrapping_mul(17).wrapping_add(c as usize);
-        n += 1;
-    }
-
-    hash
-}
