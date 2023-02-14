@@ -12,8 +12,9 @@ fn main() {
         compile();
     } else {
         println!("all files ready");
-        let word = "abo";
-        find_word(word.to_string());
+        let word = "Komplexiteten";
+        
+        find_word(word.to_lowercase().to_string());
     }
 }
 
@@ -22,6 +23,7 @@ fn find_word(word: String) {
 }
 
 fn compile() {
+    println!("compiling...");
     let start = time::Instant::now();
     read_token();
 

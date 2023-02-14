@@ -93,6 +93,9 @@ fn construct_hashed_file() -> Vec<Vec<(String, u64)>> {
     let mut tmp = String::new();
     for i in 0..tokens.len() {
         if !tokens[i].is_empty() {
+            // to know how many elements there are
+            // tmp += tokens[i].len().to_string().as_str();
+            // tmp += " ";
             for j in 0..tokens[i].len() {
                 tmp += &tokens[i][j].0;
                 tmp += " ";
