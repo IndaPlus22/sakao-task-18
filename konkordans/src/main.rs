@@ -5,16 +5,18 @@ mod compiler;
 mod hash;
 mod finder;
 
-use std::{time, path::Path};
+use std::{time, path::Path, env::{Args, args}};
 
 fn main() {
     if !Path::new("files/hashed").exists() {
         compile();
     } else {
-        println!("all files ready");
-        let word = "Komplexiteten";
-        
-        find_word(word.to_lowercase().to_string());
+        let arg = args().nth(1).expect("no word?");
+        // println!("all files ready");
+        // println!("arg is: {}", arg);
+
+        // let arg = "targetdebugkonkordans.exe";
+        find_word(arg.to_lowercase().to_string());
     }
 }
 

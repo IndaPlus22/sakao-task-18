@@ -14,4 +14,7 @@ Cargo.lock
 *.pdb
 
 # korpus files
-files/
+hashed
+index
+korpus
+token.txt

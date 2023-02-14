@@ -5,6 +5,9 @@ use std::io::{self, BufRead, BufReader, Read, Seek, SeekFrom, Write};
 use std::thread::current;
 use std::{fmt, path::Path};
 
+use encoding_rs::mem::{
+    convert_latin1_to_str, convert_latin1_to_str_partial, convert_latin1_to_utf8,
+};
 use encoding_rs::WINDOWS_1252;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 
@@ -41,26 +44,32 @@ fn search(word: String, table: Vec<(&str, usize)>) {
     let mut index_byte: usize = 0;
     while true {
         let m = (min + max) / 2;
-        let other_key = hash_three(&table[m].0);
 
         if table[m].0 == word {
             index_byte = table[m].1;
             break;
         } else if is_larger(&table[m].0, &word.as_str()) == 1 {
             min = m;
-        } else {
+        } else if is_larger(&table[m].0, &word.as_str()) == 0 {
             max = m;
         }
+
+        if min / 2 == max / 2 {
+            println!("ordet fanns inte");
+            return;
+        }
     }
-    println!("found index byte: {}", index_byte);
+    // println!("found index byte: {}", index_byte);
 
     let mut index_f = File::open("files/index").expect("cant find hashed file when start find");
     // skip to the hashed key line
-    index_f.seek(SeekFrom::Start(index_byte as u64 + 1)).unwrap();
+    index_f
+        .seek(SeekFrom::Start(index_byte as u64 + 1))
+        .unwrap();
     let mut tmp = String::new();
     let rdr = BufReader::new(index_f);
     let line: String = rdr.lines().next().unwrap().unwrap();
-    
+
     // println!("line in index: {}", line);
     print_res(line);
 }
@@ -70,49 +79,76 @@ fn is_larger(min: &str, max: &str) -> u8 {
     if min == max {
         return 2;
     }
+    let min_v: Vec<u8> = min.chars().map(|x| x as u8).collect::<Vec<u8>>();
+    let max_v: Vec<u8> = max.chars().map(|x| x as u8).collect::<Vec<u8>>();
 
-    if min.len() > max.len() {
-        return 0;
-    }
-    if min.len() < max.len() {
-        return 1;
-    }
-    for i in 0..max.len() {
-        if min.chars().next().unwrap() < max.chars().next().unwrap() {
+    for i in 0..std::cmp::min(max.len(), min.len()) {
+        if min_v[i] < max_v[i] {
             return 1;
-        } else if min.chars().next().unwrap() > max.chars().next().unwrap() {
+        } else if min_v[i] > max_v[i] {
             return 0;
         }
     }
+    if min.len() < max.len() {
+        return 1;
+    } else if min.len() > max.len() {
+        return 0;
+    }
+
     2
 }
 
 fn print_res(line: String) {
     let mut bytes: Vec<&str> = line.split_whitespace().collect();
+    let word_length = bytes[0].len();
     bytes.remove(0);
 
     println!("Det finns {} förekomster av ordet.", bytes.len());
+    let mut show: bool = true;
+    if bytes.len() > 25 {
+        println!("Ordet förekommer mer än 25 gånger. Vill du ha förekomsterna utskrivna? \n\nSkriv Y för att visa");
+        let mut input = String::new();
+        if io::stdin().read_line(&mut input).is_ok() {
+            if input.trim().to_lowercase() == "y" {
+                show = true;
+            } else {
+                show = false;
+            }
+        } else {
+            println!("okej, om du inte skriver något får du inget.");
+            show = false;
+        }
+    }
 
-    for byte in bytes {
-        println!("{}", get_from_korpus(byte.parse().unwrap()));
+    if show {
+        for byte in bytes {
+            println!("{}", get_from_korpus(byte.parse().unwrap(), word_length));
+        }
     }
 }
 
-fn get_from_korpus(byte_offset: usize) -> String {
+fn get_from_korpus(byte_offset: usize, word_len: usize) -> String {
     let start_byte = byte_offset - 30;
-    let end_byte = byte_offset + 35;
+    let end_byte = byte_offset + word_len + 30;
 
     let mut korpus_f = File::open("files/korpus").expect("cant find korpus");
     // skip to the hashed key line
-    korpus_f.seek(SeekFrom::Start(start_byte as u64 + 1)).unwrap();
+    korpus_f
+        .seek(SeekFrom::Start(start_byte as u64 + 1))
+        .unwrap();
 
     let mut output = String::new();
-    let mut buf = BufReader::new(
-        DecodeReaderBytesBuilder::new()
-            .encoding(Some(WINDOWS_1252))
-            .build(korpus_f),
-    );
+    let mut out: Vec<u8> = vec![0u8; 0];
 
-    buf.take((end_byte - start_byte) as u64).read_to_string(&mut output).unwrap();
+    korpus_f
+        .take((end_byte - start_byte) as u64)
+        .read_to_end(&mut out)
+        .unwrap();
+
+    output = latin1_to_string(&out);
     output.replace('\n', " ")
+}
+
+fn latin1_to_string(s: &[u8]) -> String {
+    s.iter().map(|&c| c as char).collect()
 }
