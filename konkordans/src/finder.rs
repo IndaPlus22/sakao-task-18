@@ -42,7 +42,7 @@ fn search(word: String, table: Vec<(&str, usize)>) {
     let key = hash_three(&word);
 
     let mut index_byte: usize = 0;
-    while true {
+    loop {
         let m = (min + max) / 2;
 
         if table[m].0 == word {
@@ -54,7 +54,7 @@ fn search(word: String, table: Vec<(&str, usize)>) {
             max = m;
         }
 
-        if min / 2 == max / 2 {
+        if max - min < 2 {
             println!("ordet fanns inte");
             return;
         }

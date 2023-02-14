@@ -11,12 +11,15 @@ fn main() {
     if !Path::new("files/hashed").exists() {
         compile();
     } else {
+        // Debug purpose
+        // let arg = "korpus";
+        // ------------
+
         let arg = args().nth(1).expect("no word?");
         // println!("all files ready");
         // println!("arg is: {}", arg);
 
-        // let arg = "targetdebugkonkordans.exe";
-        find_word(arg.to_lowercase().to_string());
+        find_word(arg.trim().to_lowercase().to_string());
     }
 }
 
