@@ -12,10 +12,10 @@ fn main() {
         compile();
     } else {
         // Debug purpose
-        // let arg = "korpus";
+        let arg = "för";
         // ------------
 
-        let arg = args().nth(1).expect("no word?");
+        // let arg = args().nth(1).expect("no word?");
         // println!("all files ready");
         // println!("arg is: {}", arg);
 

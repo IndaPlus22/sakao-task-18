@@ -12,10 +12,10 @@ use encoding_rs::WINDOWS_1252;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 
 pub fn start_find(word: String) {
-    // edge case:
-    // TODO: 
+    // fix word
+    let fixed_word = fix_word(word);
 
-    let key = hash_three(&word);
+    let key = hash_three(&fixed_word);
 
     let file = File::open("files/hashed").expect("cant find hashed file when start find");
     let reader = BufReader::new(file);
@@ -42,14 +42,13 @@ pub fn start_find(word: String) {
     }
 
     let mut table: Vec<(&str, usize)> = Vec::new();
-    println!("size: {}", tmp.len());
 
     for i in (0..tmp.len() - 1).step_by(2) {
         table.push((tmp[i], tmp[i + 1].parse().unwrap()));
     }
 
     // println!("table: {:?}", table);
-    search(word, table);
+    search(fixed_word, table);
 }
 
 fn search(word: String, table: Vec<(&str, usize)>) {
@@ -57,17 +56,6 @@ fn search(word: String, table: Vec<(&str, usize)>) {
     let mut min = 0;
     let mut max = table.len();
     let key = hash_three(&word);
-
-    // ---------
-    // make edgecase for ä å ö
-    // edge case for åäö
-    for c in word.chars() {
-        if c as u8 == 238 {
-            println!("fuck you: ");
-        }
-    }
-    println!("chars: {:?}", word.chars());
-    // --------
 
     let mut index_byte: usize = 0;
     loop {
@@ -82,7 +70,7 @@ fn search(word: String, table: Vec<(&str, usize)>) {
             max = m;
         }
 
-        if max - min < 2 {
+        if /*max - min < 2*/ max == min {
             println!("ordet fanns inte 3");
             return;
         }
@@ -110,7 +98,7 @@ fn is_larger(min: &str, max: &str) -> u8 {
     let min_v: Vec<u8> = min.chars().map(|x| x as u8).collect::<Vec<u8>>();
     let max_v: Vec<u8> = max.chars().map(|x| x as u8).collect::<Vec<u8>>();
 
-    for i in 0..std::cmp::min(max.len(), min.len()) {
+    for i in 0..std::cmp::min(max_v.len(), min_v.len()) {
         if min_v[i] < max_v[i] {
             return 1;
         } else if min_v[i] > max_v[i] {
@@ -179,4 +167,17 @@ fn get_from_korpus(byte_offset: usize, word_len: usize) -> String {
 
 pub fn latin1_to_string(s: &[u8]) -> String {
     s.iter().map(|&c| c as char).collect()
+}
+
+fn fix_word(word: String) -> String {
+    let fixed = word
+        .chars()
+        .map(|x| match x {
+            'å' | 'ö' => 'ä',
+            _ => x,
+        })
+        .collect();
+    
+    println!("fixed: {}", fixed);
+    fixed
 }
