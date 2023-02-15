@@ -8,6 +8,7 @@ use std::thread::current;
 use std::{fmt, path::Path};
 
 use crate::hash::hash_three;
+use crate::finder::latin1_to_string;
 
 
 const KORPUS_FILE: &str = "files/korpus";
@@ -24,13 +25,12 @@ pub fn read_token() {
 }
 
 fn construct_index_file() {
-    let mut buf = BufReader::new(
-        DecodeReaderBytesBuilder::new()
-            .encoding(Some(WINDOWS_1252))
-            .build(File::open(TOKEN_FILE).unwrap()),
-    );
-    // File::open(TOKEN_FILE).unwrap()
-    // OpenOptions::new().read(true).open(TOKEN_FILE).unwrap()
+    // let mut buf = BufReader::new(
+    //     DecodeReaderBytesBuilder::new()
+    //         .encoding(Some(WINDOWS_1252))
+    //         .build(File::open(TOKEN_FILE).unwrap()),
+    // );
+    let mut buf = BufReader::new(File::open(TOKEN_FILE).unwrap());
 
     let mut line = String::new();
     let mut bytes: usize = buf.read_line(&mut line).unwrap();
@@ -41,6 +41,14 @@ fn construct_index_file() {
     while bytes > 0 {
         let key = line.split_whitespace().next().unwrap();
         let byte_offset = line.split_whitespace().last().unwrap();
+
+        // edge case for åäö
+        for c in key.chars() {
+            if c as u8 == 238 {
+                println!("fuck you: ");
+            }
+        }
+        println!("chars: {:?}", key.chars());
 
         // if it is a new key do a newline and put in what key it is.
         if last_key != key {
