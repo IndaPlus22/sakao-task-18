@@ -13,9 +13,9 @@ use encoding_rs_io::DecodeReaderBytesBuilder;
 
 pub fn start_find(word: String) {
     // fix word
-    let fixed_word = fix_word(word);
+    // let fixed_word = fix_word(word);
 
-    let key = hash_three(&fixed_word);
+    let key = hash_three(&word);
 
     let file = File::open("files/hashed").expect("cant find hashed file when start find");
     let reader = BufReader::new(file);
@@ -33,7 +33,7 @@ pub fn start_find(word: String) {
 
     let line = tmp.unwrap().unwrap();
     // println!("ln: {}: \n{}", key +1, line);
-    let mut tmp: Vec<&str> = line.trim().split_whitespace().map(|x| x).collect();
+    let tmp: Vec<&str> = line.trim().split_whitespace().map(|x| x).collect();
 
     // if the lazy hash key line did not have any elements
     if tmp.len() == 0 {
@@ -48,7 +48,7 @@ pub fn start_find(word: String) {
     }
 
     // println!("table: {:?}", table);
-    search(fixed_word, table);
+    search(word, table);
 }
 
 fn search(word: String, table: Vec<(&str, usize)>) {
@@ -144,8 +144,14 @@ fn print_res(line: String) {
 }
 
 fn get_from_korpus(byte_offset: usize, word_len: usize) -> String {
-    let start_byte = byte_offset - 30;
-    let end_byte = byte_offset + word_len + 30;
+    let mut start_byte: usize = 0;
+    let mut end_byte: usize = byte_offset + word_len + 30;
+    if byte_offset > 30 {
+        start_byte = byte_offset - 30;
+    }
+    // if byte_offset < 100617660 -30 {
+    //     end_byte = byte_offset + word_len + 30;
+    // }
 
     let mut korpus_f = File::open("files/korpus").expect("cant find korpus");
     // skip to the hashed key line
@@ -177,7 +183,7 @@ fn fix_word(word: String) -> String {
             _ => x,
         })
         .collect();
-    
+
     println!("fixed: {}", fixed);
     fixed
 }
