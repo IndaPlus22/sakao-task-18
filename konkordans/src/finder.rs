@@ -33,9 +33,10 @@ pub fn start_find(word: String) {
 
     let line = tmp.unwrap().unwrap();
     // println!("ln: {}: \n{}", key +1, line);
-    let tmp: Vec<&str> = line.trim().split_whitespace().map(|x| x).collect();
+    let tmp: Vec<&str> = line.trim().split_whitespace().map(|x: &str| x).collect();
 
     // if the lazy hash key line did not have any elements
+    // println!("tmp.len(): {}", tmp.len());
     if tmp.len() == 0 {
         println!("ordet fanns inte 2");
         return;
@@ -43,7 +44,9 @@ pub fn start_find(word: String) {
 
     let mut table: Vec<(&str, usize)> = Vec::new();
 
+    // println!("tmp.len(): {}", tmp.len());
     for i in (0..tmp.len() - 1).step_by(2) {
+        // println!("i: {}, tmp[i]: {}", i, tmp[i]);
         table.push((tmp[i], tmp[i + 1].parse().unwrap()));
     }
 
@@ -70,7 +73,8 @@ fn search(word: String, table: Vec<(&str, usize)>) {
             max = m;
         }
 
-        if /*max - min < 2*/ max == min {
+        // if max == min {
+        if max - min < 2 {
             println!("ordet fanns inte 3");
             return;
         }
@@ -86,7 +90,6 @@ fn search(word: String, table: Vec<(&str, usize)>) {
     let rdr = BufReader::new(index_f);
     let line: String = rdr.lines().next().unwrap().unwrap();
 
-    // println!("line in index: {}", line);
     print_res(line);
 }
 
